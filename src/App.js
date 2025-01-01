@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createElement, useState } from "react";
 
 function calculateWinner(squares) {
 	const lines = [
@@ -14,16 +14,16 @@ function calculateWinner(squares) {
 	for (let i = 0; i < lines.length; i++) {
 		const [a, b, c] = lines[i];
 		if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-			return squares[a];
+			return [squares[a], lines[i]];
 		}
 	}
 	return null;
 }
 
 
-function Square({value, onSquareClick}) {
+function Square({isWinner, value, onSquareClick}) {
 	return <button 
-	className="square"
+	className={isWinner ? "winnerSquare": "square"}
 	onClick={onSquareClick}>
 		{value}
 		</button>
@@ -47,30 +47,27 @@ function Board({xIsNext, squares, onPlay}) {
 	const winner = calculateWinner(squares);
 	let status;
 	if (winner) {
-		status = "Winner: " + winner;
+		status = "Winner: " + winner[0];
 	} else {
 		status = "Next player: " + (xIsNext ? "X" : "O");
 	}
 
 
+	const createSqrs = (i) => squares.slice(i * 3, i * 3 + 3).map((sqr, index) => {
+
+		return <Square isWinner={winner && winner[1].includes(i * 3 + index)} key={i * 3 + index} value={sqr} onSquareClick={() => handleClick(i * 3 + index)}/>;
+		// You were calling the handleClick function instead of passing a
+		// function object
+	});
+
+	const board = Array(3).fill().map((_, index) => {
+		return createElement("div", {key: index, className: "board-row"}, createSqrs(index));
+	});
+
 	return ( 
       <>
-	  <div className="status">{status}</div>
-	  <div className="board-row">
-		<Square value={squares[0]} onSquareClick={() => handleClick(0)}/>
-		<Square value={squares[1]} onSquareClick={() => handleClick(1)}/>
-		<Square value={squares[2]} onSquareClick={() => handleClick(2)}/>
-	  </div>
-	  <div className="board-row">
-		<Square value={squares[3]} onSquareClick={() => handleClick(3)}/>
-		<Square value={squares[4]} onSquareClick={() => handleClick(4)}/>
-		<Square value={squares[5]} onSquareClick={() => handleClick(5)}/>
-	  </div>
-	  <div className="board-row">
-		<Square value={squares[6]} onSquareClick={() => handleClick(6)}/>
-		<Square value={squares[7]} onSquareClick={() => handleClick(7)}/>
-		<Square value={squares[8]} onSquareClick={() => handleClick(8)}/>
-	  </div>
+		<div className="status">{status}</div>
+		{board}
     </>)
 }
 
