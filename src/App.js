@@ -1,5 +1,25 @@
 import { createElement, useState } from "react";
 
+function rowAndCol(lastPlayIndex) {
+	let row, column;
+	if (lastPlayIndex <= 2 && lastPlayIndex >= 0)
+		row = 1;
+	else if (lastPlayIndex <= 5 && lastPlayIndex >= 3)
+		row = 2;
+	else if (lastPlayIndex <= 8 && lastPlayIndex >= 6)
+		row = 3;
+
+	if (lastPlayIndex % 3 === 0)
+		column = 1;
+	else if (lastPlayIndex % 3 === 1)
+		column = 2;
+	else if (lastPlayIndex % 3 === 2)
+		column = 3;
+
+	return [row, column];
+}
+
+
 function calculateWinner(squares) {
 	const lines = [
 		[0, 1, 2],
@@ -71,38 +91,48 @@ function Board({xIsNext, squares, onPlay}) {
     </>)
 }
 
+
 export default function Game() {
 	const [history, setHistory] = useState([Array(9).fill(null)]);
 	const [currentMove, setCurrentMove] = useState(0);
 	const xAsNext = currentMove % 2 === 0;
 	const currentBoard = history[currentMove];
+	const [games, changeCurrentGame] = useState([0]);
+
 
 	function handlePlay(squares) {
-		const nextHistory = [...history.slice(0, currentMove + 1), squares]; // why is it currentMove + 1?
-		// Because if the last history slice is 3, if you put 3 it'll stop at
-		// 2, so in needs to be 3 + 1 so the three isn't leave out
+		const nextHistory = [...history.slice(0, currentMove + 1), squares];
 		setHistory(nextHistory);
 		setCurrentMove(nextHistory.length - 1);
+
+		const diffIndex = currentBoard.findIndex((value, index) => {
+			return currentBoard[index] !== squares[index];
+		})
+		changeCurrentGame([...games, rowAndCol(diffIndex)]);
 	}
+
 
 	function jumpTo(selectedMove) {
 		setCurrentMove(selectedMove)
+		// It works but it shows undefined when I go back into a previous play
+		changeCurrentGame(games.slice(0, selectedMove + 1));
 	}
 
 	const moves = history.map((squares, move) => {
 		let description;
 		if (move > 0) {
-			description = "Go to move # " + move;
+			description = `Go to move # ${move} -> ${games[move]}`;
 		} else {
 			description = "Go to game start";
 		}
 		return (
 			<li>
-				<button key={move} onClick={
-					() => jumpTo(move)}>{description}</button>
+			<button key={move} onClick={
+				() => jumpTo(move)}>{description}</button>
 			</li>
 		)
 	})
+
 
 	return (
 		<div className="game">
